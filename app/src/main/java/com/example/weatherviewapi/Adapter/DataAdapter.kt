@@ -5,10 +5,10 @@ import androidx.recyclerview.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.TextView
-import com.example.weatherviewapi.Domains.Data
+import com.example.weatherviewapi.Domains.ResponseData
 import com.example.weatherviewapi.R
 
-class DataAdapter(private val dataList : ArrayList<Data>) : RecyclerView.Adapter<DataAdapter.ViewHolder>() {
+class DataAdapter(private val dataList: ArrayList<ResponseData>) : RecyclerView.Adapter<DataAdapter.ViewHolder>() {
 
     class ViewHolder(itemView : View) : RecyclerView.ViewHolder(itemView) {
 
@@ -24,8 +24,12 @@ class DataAdapter(private val dataList : ArrayList<Data>) : RecyclerView.Adapter
     override fun onBindViewHolder(holder: DataAdapter.ViewHolder, position: Int) {
         val data = dataList[position]
 
-        holder.temperature.text = data.temperature.toString()
-        holder.humidity.text = data.humidity.toString()
+        if (data != null) {
+            holder.temperature.text = data.temperature.toString()
+        }
+        if (data != null) {
+            holder.humidity.text = data.humidity.toString()
+        }
     }
 
     override fun getItemCount(): Int {

@@ -1,9 +1,11 @@
 package com.example.weatherviewapi.Domains
 
-import java.time.format.DateTimeFormatter
 import java.util.Date
 
-data class Data (
+data class ResponseData (
     val date: Date,
     val hour: Date,
+    val humidity: Int,
+    val temperature: Int
+
 )
