@@ -1,38 +1,53 @@
 package com.example.weatherviewapi.Adapter
 
-import android.view.View
-import androidx.recyclerview.widget.RecyclerView
+import android.content.Context
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.recyclerview.widget.RecyclerView
 import com.example.weatherviewapi.Domains.ResponseData
 import com.example.weatherviewapi.R
+import com.example.weatherviewapi.databinding.ItemDataBinding
 
-class DataAdapter(private val dataList: ArrayList<ResponseData>) : RecyclerView.Adapter<DataAdapter.ViewHolder>() {
+class DataAdapter(
+    private val dataList: MutableList<ResponseData>,
+    private val context:Context
+) : RecyclerView.Adapter<DataAdapter.ViewHolder>() {
 
-    class ViewHolder(itemView : View) : RecyclerView.ViewHolder(itemView) {
+    override fun onCreateViewHolder(
+        parent: ViewGroup,
+        viewType: Int)
+    : ViewHolder = ViewHolder(
+        ItemDataBinding.inflate(
+            LayoutInflater.from(context),
+            parent,
+            false
+        )
+    )
 
-        val temperature = itemView.findViewById<TextView>(R.id.temperature)
-        val humidity = itemView.findViewById<TextView>(R.id.humidity)
+    override fun getItemCount(): Int = dataList.size
 
-    }
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DataAdapter.ViewHolder {
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.item_data,parent,false))
-    }
-
-    override fun onBindViewHolder(holder: DataAdapter.ViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val data = dataList[position]
-
-        if (data != null) {
-            holder.temperature.text = data.temperature.toString()
-        }
-        if (data != null) {
-            holder.humidity.text = data.humidity.toString()
-        }
+        holder.bind(data)
     }
 
-    override fun getItemCount(): Int {
-        return dataList.size
+    // Método para atualizar a lista de dados dinamicamente
+    fun updateData(newDataList: List<ResponseData>) {
+        dataList.clear()
+        dataList.addAll(newDataList)
+        notifyDataSetChanged()
+    }
+
+    class ViewHolder(
+        private val itemData: ItemDataBinding
+    ) : RecyclerView.ViewHolder(itemData.root) {
+
+        fun bind(data: ResponseData) {
+            itemData.humidity.text = data.humidity.toString()
+            itemData.temperature.text = data.temperature.toString()
+        }
+
     }
 }

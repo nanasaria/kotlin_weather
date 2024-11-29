@@ -2,7 +2,6 @@ package com.example.weatherviewapi.UI
 
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import android.widget.TextView
 import androidx.annotation.RequiresApi
@@ -23,18 +22,13 @@ import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.Response
-import okhttp3.WebSocket
-import okhttp3.WebSocketListener
 import okio.IOException
-import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.time.format.DateTimeFormatter
 import java.util.Date
 import java.util.Locale
-import java.util.concurrent.TimeUnit
 
-class MainActivity : AppCompatActivity() {
+class IntroActivity : AppCompatActivity() {
     private val client = OkHttpClient()
     private lateinit var adapter: DataAdapter
     private val dataList = mutableListOf<ResponseData>()
@@ -44,7 +38,6 @@ class MainActivity : AppCompatActivity() {
     val currentDate = Date()
     val formattedDate = dateFormatter.format(currentDate)
     val formattedHour = hourFormatter.format(currentDate)
-    private lateinit var webSocket: WebSocket
 
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -53,26 +46,20 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Configurar RecyclerView
-        adapter = DataAdapter(context = this, dataList = dataList)
-        binding.viewHistoric.adapter = adapter
-        binding.textView3.text = "$formattedDate | $formattedHour"
+        //MOCK
+        dataList.add(ResponseData(date = currentDate, hour = formattedHour, humidity = 20, temperature = 20))
+        dataList.add(ResponseData(date = currentDate, hour = formattedHour, humidity = 20, temperature = 20))
+        dataList.add(ResponseData(date = currentDate, hour = formattedHour, humidity = 20, temperature = 20))
 
-        // Conectar ao WebSocket
-
-
-//        //MOCK
-//        dataList.add(ResponseData(date = currentDate, hour = formattedHour, humidity = 20, temperature = 20))
-//        dataList.add(ResponseData(date = currentDate, hour = formattedHour, humidity = 20, temperature = 20))
-//        dataList.add(ResponseData(date = currentDate, hour = formattedHour, humidity = 20, temperature = 20))
-
-         adapter = DataAdapter(
+        adapter = DataAdapter(
             context = this,
             dataList = dataList
         )
 
         binding.viewHistoric.adapter = adapter
         binding.textView3.text = "$formattedDate | $formattedHour"
+
+
 
         // Buscar dados da API
         val requestData = Data(formattedDate, formattedHour)
@@ -81,8 +68,6 @@ class MainActivity : AppCompatActivity() {
         }
 
     }
-
-
 
     private suspend fun fetchData(data: Data) {
         try {

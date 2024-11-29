@@ -126,17 +126,28 @@
                     android:textColor="@color/green_secundary"
                     android:textSize="20sp"
                     android:textStyle="bold" />
+
+
             </LinearLayout>
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/viewHistoric"
-                android:layout_width="match_parent"
-                android:layout_height="213dp"
-                android:clipToPadding="false"
-                android:paddingStart="24dp"
-                android:paddingEnd="24dp" />
+                android:layout_width="300dp"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="100dp"
+                android:textColor="@color/green_secundary"
+                android:textSize="63sp"
+                android:textStyle="bold"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:itemCount="3"
+                tools:listitem="@layout/item_data" />
+
 
         </LinearLayout>
+
 
     </ScrollView>
 

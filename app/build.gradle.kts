@@ -59,7 +59,6 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation("com.github.bumptech.glide:glide:4.16.0")
     implementation ("org.java-websocket:Java-WebSocket:1.5.2")
-    implementation ("com.squareup.okhttp3:okhttp:4.9.3")
     implementation ("androidx.appcompat:appcompat:1.6.1")
     implementation ("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
@@ -69,6 +68,7 @@ dependencies {
     implementation(libs.androidx.recyclerview)
     // define a BOM and its version
     implementation(platform("com.squareup.okhttp3:okhttp-bom:4.12.0"))
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
 
     // define any required OkHttp artifacts without version
     implementation("com.squareup.okhttp3:okhttp")
