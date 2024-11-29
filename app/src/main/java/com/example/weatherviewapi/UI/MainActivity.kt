@@ -1,5 +1,6 @@
 package com.example.weatherviewapi.UI
 
+import android.annotation.SuppressLint
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -65,7 +66,7 @@ class MainActivity : AppCompatActivity() {
         // Conectar ao WebSocket
         try {
             val request = Request.Builder()
-                .url("ws://10.0.2.2:3004/buscar?date=${formattedDate}&hour=${formattedHour}")
+                .url("ws://10.0.2.2:3004")
                 .build()
             val client = OkHttpClient()
             val listener = MyWebsocketListener()
@@ -74,13 +75,6 @@ class MainActivity : AppCompatActivity() {
         }catch (err: Exception) {
             err.printStackTrace()
         }
-
-
-        // Buscar dados da API
-//        val requestData = Data(formattedDate, formattedHour)
-//        lifecycleScope.launch {
-//            fetchData(requestData)
-//        }
 
     }
 
@@ -108,6 +102,7 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    @SuppressLint("SuspiciousIndentation")
     private fun handleIncomingMessage(message: String){
         println("mensagem incomming message: ${message}")
 
@@ -184,6 +179,8 @@ class MainActivity : AppCompatActivity() {
                 lifecycleScope.launch(Dispatchers.Main) {
                     adapter.notifyItemInserted(dataList.size)
                     adapter.updateData(it) // Atualizar RecyclerView
+                    binding.textView4.text = dataList[dataList.size -1].temperature.toString()
+                    binding.textView6.text = dataList[dataList.size -1].humidity.toString()
                 }
                 println("dataList:  " + dataList)
             }
