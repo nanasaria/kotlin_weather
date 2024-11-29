@@ -11,8 +11,10 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.weatherviewapi.Adapter.DataAdapter
 import com.example.weatherviewapi.Adapter.DateTypeAdapter
+import com.example.weatherviewapi.Adapter.SafeDoubleAdapter
 import com.example.weatherviewapi.Domains.Data
 import com.example.weatherviewapi.Domains.ResponseData
+import com.example.weatherviewapi.Domains.WsResponseData
 import com.example.weatherviewapi.R
 import com.example.weatherviewapi.databinding.ActivityMainBinding
 import com.google.gson.Gson
@@ -26,6 +28,7 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
+import okio.ByteString
 import okio.IOException
 import org.json.JSONObject
 import java.text.SimpleDateFormat
@@ -47,57 +50,97 @@ class MainActivity : AppCompatActivity() {
     private lateinit var webSocket: WebSocket
 
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Configurar RecyclerView
+        // Adicionando Data e texto atual ao label
+        binding.textView3.text = "$formattedDate | $formattedHour"
+
+        // Configurando o RecyclerView com o adapter
         adapter = DataAdapter(context = this, dataList = dataList)
         binding.viewHistoric.adapter = adapter
-        binding.textView3.text = "$formattedDate | $formattedHour"
 
         // Conectar ao WebSocket
+        try {
+            val request = Request.Builder()
+                .url("ws://10.0.2.2:3004/buscar?date=${formattedDate}&hour=${formattedHour}")
+                .build()
+            val client = OkHttpClient()
+            val listener = MyWebsocketListener()
+            webSocket = client.newWebSocket(request, listener)
 
+        }catch (err: Exception) {
+            err.printStackTrace()
+        }
 
-//        //MOCK
-//        dataList.add(ResponseData(date = currentDate, hour = formattedHour, humidity = 20, temperature = 20))
-//        dataList.add(ResponseData(date = currentDate, hour = formattedHour, humidity = 20, temperature = 20))
-//        dataList.add(ResponseData(date = currentDate, hour = formattedHour, humidity = 20, temperature = 20))
-
-         adapter = DataAdapter(
-            context = this,
-            dataList = dataList
-        )
-
-        binding.viewHistoric.adapter = adapter
-        binding.textView3.text = "$formattedDate | $formattedHour"
 
         // Buscar dados da API
-        val requestData = Data(formattedDate, formattedHour)
-        lifecycleScope.launch {
-            fetchData(requestData)
-        }
+//        val requestData = Data(formattedDate, formattedHour)
+//        lifecycleScope.launch {
+//            fetchData(requestData)
+//        }
 
     }
 
+    inner class MyWebsocketListener : WebSocketListener() {
+        override fun onOpen(webSocket: WebSocket, response: Response) {
+            super.onOpen(webSocket, response)
+            val jsonObject = JSONObject()
+            jsonObject.put("date", formattedDate)
+            jsonObject.put("hour", formattedHour)
+            webSocket.send(jsonObject.toString())
+        }
 
-
-    private suspend fun fetchData(data: Data) {
-        try {
-            val response = getData(data)
-            response?.let {
-                dataList.clear()
-                println("IT:  " + it)
-                dataList.addAll(it)
-                adapter.updateData(it) // Atualizar RecyclerView
-                println("dataList:  " + dataList)
+        override fun onMessage(webSocket: WebSocket, text: String) {
+            super.onMessage(webSocket, text)
+            runOnUiThread {
+                handleIncomingMessage(text)
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
+
         }
+
+        override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+            super.onFailure(webSocket, t, response)
+            println("FALHA WEBSOCKET: ${t.message}")
+        }
+
     }
+
+    private fun handleIncomingMessage(message: String){
+        println("mensagem incomming message: ${message}")
+
+        try {
+            val gson = GsonBuilder()
+                .setDateFormat("dd/MM/yyyy HH:mm:ss")
+                .create()
+
+              val parsetWsResponse = gson.fromJson(message, WsResponseData::class.java)
+                println("Acessando os valores: ")
+                println(parsetWsResponse)
+        }
+        catch (e : Exception){
+            println("ERRO PARSER: ${e.message}")
+        }
+
+        try {
+            val requestData = Data(formattedDate, formattedHour)
+            lifecycleScope.launch {
+                fetchData(requestData)
+            }
+
+        //        //atualiza o recycler
+        //        lifecycleScope.launch(Dispatchers.Main) {
+        //            adapter.notifyItemInserted(dataList.size)
+        //        }
+
+        }catch (e: Exception){
+            println("ERRO fetch request: ${e.message}")
+        }
+
+    }
+
 
     private suspend fun getData(data: Data): List<ResponseData>? {
         val url = HttpUrl.Builder()
@@ -114,19 +157,40 @@ class MainActivity : AppCompatActivity() {
             .get()
             .build()
 
+        val client = OkHttpClient()
+
         return withContext(Dispatchers.IO) {
             client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) throw IOException("Código inesperado: $response")
-
                 val responseBody = response.body?.string() ?: return@withContext null
                 val gson = GsonBuilder()
+                    .registerTypeAdapter(Double::class.java, SafeDoubleAdapter())
                     .setDateFormat("dd/MM/yyyy HH:mm:ss")
                     .create()
                 println("response Body: " + responseBody)
 
-                // Deserializar para uma lista de ResponseData
                 gson.fromJson(responseBody, Array<ResponseData>::class.java).toList()
             }
         }
     }
+
+    private suspend fun fetchData(data: Data) {
+        try {
+            val response = getData(data)
+            response?.let {
+                dataList.clear()
+                println("IT:  " + it)
+                dataList.addAll(it)
+                lifecycleScope.launch(Dispatchers.Main) {
+                    adapter.notifyItemInserted(dataList.size)
+                    adapter.updateData(it) // Atualizar RecyclerView
+                }
+                println("dataList:  " + dataList)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+
 }

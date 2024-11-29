@@ -12,6 +12,7 @@ import com.example.weatherviewapi.Adapter.DataAdapter
 import com.example.weatherviewapi.Adapter.DateTypeAdapter
 import com.example.weatherviewapi.Domains.Data
 import com.example.weatherviewapi.Domains.ResponseData
+import com.example.weatherviewapi.Domains.WsResponseData
 import com.example.weatherviewapi.R
 import com.example.weatherviewapi.databinding.ActivityMainBinding
 import com.google.gson.Gson
@@ -22,7 +23,11 @@ import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.Response
+import okhttp3.WebSocket
+import okhttp3.WebSocketListener
 import okio.IOException
+import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.time.format.DateTimeFormatter
 import java.util.Date
@@ -40,16 +45,10 @@ class IntroActivity : AppCompatActivity() {
     val formattedHour = hourFormatter.format(currentDate)
 
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        //MOCK
-        dataList.add(ResponseData(date = currentDate, hour = formattedHour, humidity = 20, temperature = 20))
-        dataList.add(ResponseData(date = currentDate, hour = formattedHour, humidity = 20, temperature = 20))
-        dataList.add(ResponseData(date = currentDate, hour = formattedHour, humidity = 20, temperature = 20))
 
         adapter = DataAdapter(
             context = this,
@@ -58,7 +57,6 @@ class IntroActivity : AppCompatActivity() {
 
         binding.viewHistoric.adapter = adapter
         binding.textView3.text = "$formattedDate | $formattedHour"
-
 
 
         // Buscar dados da API
@@ -114,4 +112,71 @@ class IntroActivity : AppCompatActivity() {
             }
         }
     }
+
+    inner class MyWebsocketListener : WebSocketListener() {
+        override fun onOpen(webSocket: WebSocket, response: Response) {
+            super.onOpen(webSocket, response)
+            val jsonObject = JSONObject()
+            jsonObject.put("date", formattedDate)
+            jsonObject.put("hour", formattedHour)
+            webSocket.send(jsonObject.toString())
+        }
+
+        override fun onMessage(webSocket: WebSocket, text: String) {
+            super.onMessage(webSocket, text)
+            runOnUiThread {
+                handleIncomingMessage(text, webSocket)
+            }
+
+        }
+
+        override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+            super.onFailure(webSocket, t, response)
+            println("FALHA WEBSOCKET: ${t.message}")
+        }
+
+    }
+
+    private fun handleIncomingMessage(message: String, webSocket: WebSocket){
+
+        println("mensagem incomming message: ${message}")
+
+        try {
+            val gson = GsonBuilder()
+                .setDateFormat("dd/MM/yyyy HH:mm:ss")
+                .create()
+
+            // Deserializar para uma lista de ResponseData
+            //        val parsetWsResponse = gson.fromJson(message, Array<ResponseData>::class.java)
+            val parsetWsResponse = gson.fromJson(message, WsResponseData::class.java)
+
+            println("Acessando os valores: ")
+            println(parsetWsResponse)
+        }
+        catch (e : Exception){
+            println("ERRO PARSER: ${e.message}")
+        }
+
+        try {
+
+            val requestData = Data(formattedDate, formattedHour)
+            lifecycleScope.launch {
+                fetchData(requestData)
+            }
+
+//                println("response Body websoccket: " + responseBody)
+//        println("Acessando os valores: ")
+//        println(parsetWsResponse)            // Output: update
+//        println(parsetWsResponse.data.humidity)    // Output: 50.00
+//        println(parsetWsResponse.data.temperature) // Output: 29.90
+            //        //atualiza o recycler
+            //        lifecycleScope.launch(Dispatchers.Main) {
+            //            adapter.notifyItemInserted(dataList.size)
+            //        }
+//        }
+    }catch (e: Exception){
+        println("ERRO websocket request: ${e.message}")
+    }
+
+}
 }
