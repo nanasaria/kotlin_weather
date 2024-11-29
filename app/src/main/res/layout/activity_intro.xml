@@ -12,7 +12,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        tools:ignore="MissingConstraints">
+        tools:ignore="MissingConstraints"
+
+        >
 
     <TextView
         android:id="@+id/textView3"
@@ -22,7 +24,9 @@
         android:text="12/12/2024 | 10:00"
         android:textAlignment="center"
         android:textColor="@color/green_primary"
-        android:textSize="19sp" />
+        android:textSize="19sp"
+        android:textFontWeight="1"
+        />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/viewHistoric"
